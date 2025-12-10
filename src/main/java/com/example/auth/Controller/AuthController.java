@@ -1,5 +1,6 @@
 package com.example.auth.Controller;
 
+import com.example.auth.AuthDTO.JwtResponse;
 import com.example.auth.AuthDTO.LoginRequest;
 import com.example.auth.AuthDTO.RegisterRequest;
 import com.example.auth.Service.AuthService;
@@ -32,14 +33,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
-        boolean success = authService.login(request);
+        String token = authService.login(request);
 
-        if(success) {
-            return ResponseEntity.status(HttpStatus.OK).body("Login Success");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are unauthorized");
+        if(token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }
+
+        return ResponseEntity.status(HttpStatus.OK).body(new JwtResponse(token));
     }
 }

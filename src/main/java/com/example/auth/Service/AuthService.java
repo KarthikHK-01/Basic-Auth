@@ -3,7 +3,9 @@ package com.example.auth.Service;
 import com.example.auth.AuthDTO.LoginRequest;
 import com.example.auth.AuthDTO.RegisterRequest;
 import com.example.auth.Entity.User;
+import com.example.auth.JWT.JWTService;
 import com.example.auth.Repository.UserRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +14,12 @@ public class AuthService {
 
     public final UserRepo userRepo;
     public final PasswordEncoder passwordEncoder;
+    public final JWTService jwtService;
 
-    public AuthService(UserRepo userRepo, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepo userRepo, PasswordEncoder passwordEncoder, JWTService jwtService) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public void register(RegisterRequest registerRequest) {
@@ -35,13 +39,22 @@ public class AuthService {
         userRepo.save(user);
     }
 
-    public boolean login(LoginRequest loginRequest) {
+    public String login(LoginRequest loginRequest) {
         User user = userRepo.findByEmail(loginRequest.getEmail()).orElse(null);
 
         if(user == null) {
-            return false;
+            return null;
+        }
+        
+        boolean correctPassword = passwordEncoder.matches(
+                loginRequest.getPassword(),
+                user.getPassword()
+        );
+
+        if(!correctPassword) {
+            return null;
         }
 
-        return passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
+        return jwtService.generateToken(loginRequest.getEmail());
     }
 }
